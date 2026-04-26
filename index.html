@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laser Calc — Bodor A3</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Unbounded:wght@700;900&display=swap');
+:root {
+  --bg:#080808;--s1:#101010;--s2:#161616;--border:#222;
+  --accent:#ff3d00;--gold:#ffb300;--green:#00e676;
+  --text:#ececec;--muted:#555;
+  --mono:'JetBrains Mono',monospace;--head:'Unbounded',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;font-size:13px;display:flex;flex-direction:column;}
+.header{background:var(--s1);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
+.logo{font-family:var(--head);font-size:12px;font-weight:900;letter-spacing:3px;color:var(--accent);}
+.badge{font-size:9px;background:var(--border);color:var(--muted);padding:3px 8px;letter-spacing:1px;}
+.hright{margin-left:auto;font-size:10px;color:var(--muted);}
+.api-bar{background:#0a0a0a;border-bottom:1px solid var(--border);padding:8px 20px;display:flex;align-items:center;gap:10px;font-size:11px;}
+.api-bar label{color:var(--muted);white-space:nowrap;}
+.api-bar input{flex:1;max-width:360px;background:var(--s1);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;padding:6px 10px;outline:none;}
+.api-bar input:focus{border-color:var(--accent);}
+.sdot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.sdot.ok{background:var(--green);}
+#stext{color:var(--muted);}
+.chat-area{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;max-width:820px;width:100%;margin:0 auto;}
+.msg{display:flex;flex-direction:column;gap:4px;animation:fi .3s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{align-items:flex-end;}
+.msg.bot{align-items:flex-start;}
+.mlabel{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;padding:0 4px;}
+.bubble{max-width:88%;padding:12px 16px;font-size:13px;line-height:1.65;white-space:pre-wrap;}
+.msg.user .bubble{background:var(--accent);color:#fff;border-radius:2px 2px 0 2px;}
+.msg.bot .bubble{background:var(--s1);border:1px solid var(--border);border-radius:2px 2px 2px 0;}
+.rcard{background:var(--s1);border:1px solid var(--border);border-left:3px solid var(--accent);max-width:88%;}
+.rcard-head{padding:8px 14px;background:var(--border);font-family:var(--head);font-size:9px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;}
+.rrow{display:flex;justify-content:space-between;gap:16px;padding:7px 14px;border-bottom:1px solid #1a1a1a;font-size:12px;}
+.rrow:last-child{border-bottom:none;}
+.rrow .rl{color:var(--muted);}
+.rrow .rv{font-weight:700;}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);}
+.pbox{background:var(--s2);padding:14px;text-align:center;}
+.ptype{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
+.pval{font-family:var(--head);font-size:18px;font-weight:700;}
+.pbox.c .pval{color:var(--green);}
+.pbox.n .pval{color:var(--gold);}
+.pbox.v .pval{color:var(--accent);}
+.thinking{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;padding:8px 0;}
+.dots span{display:inline-block;width:5px;height:5px;background:var(--accent);border-radius:50%;animation:b 1.2s infinite;margin:0 2px;}
+.dots span:nth-child(2){animation-delay:.2s;}
+.dots span:nth-child(3){animation-delay:.4s;}
+@keyframes b{0%,80%,100%{transform:scale(.5);opacity:.3}40%{transform:scale(1);opacity:1}}
+.input-area{border-top:1px solid var(--border);background:var(--s1);padding:12px 20px;}
+.input-inner{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:8px;}
+.fzone{border:1px dashed var(--border);padding:10px 14px;font-size:11px;color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:8px;transition:border-color .2s,color .2s;}
+.fzone:hover,.fzone.drag{border-color:var(--accent);color:var(--text);}
+.fzone input{display:none;}
+.atags{display:flex;flex-wrap:wrap;gap:6px;}
+.atag{background:#1a1a1a;border:1px solid var(--border);padding:4px 8px;font-size:11px;display:flex;align-items:center;gap:6px;color:var(--gold);}
+.atag button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:0;}
+.irow{display:flex;gap:8px;}
+textarea{flex:1;background:var(--s2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:13px;padding:10px 14px;resize:none;outline:none;min-height:44px;max-height:120px;}
+textarea:focus{border-color:var(--accent);}
+textarea::placeholder{color:var(--muted);}
+button.send{background:var(--accent);border:none;color:#fff;font-family:var(--head);font-size:10px;font-weight:700;padding:0 20px;cursor:pointer;letter-spacing:2px;transition:background .15s;}
+button.send:hover{background:#ff5722;}
+button.send:disabled{background:var(--muted);cursor:not-allowed;}
+.hint{font-size:10px;color:var(--muted);text-align:center;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="width:7px;height:7px;background:var(--accent);border-radius:50%"></div>
+  <div class="logo">⚡ LASER CALC</div>
+  <div class="badge">Bodor A3 · 3000W</div>
+  <div class="hright">via Cloudflare Proxy</div>
+</div>
+
+<div class="api-bar">
+  <label>API KEY:</label>
+  <input type="password" id="apiKey" placeholder="sk-ant-api03-..." oninput="checkKey()">
+  <div class="sdot" id="sdot"></div>
+  <span id="stext">не задан</span>
+</div>
+
+<div class="chat-area" id="chatArea">
+  <div class="msg bot">
+    <div class="mlabel">Калькулятор</div>
+    <div class="bubble">Привет! Отправь DXF, фото чертежа или напиши данные вручную.
+
+Укажи материал и толщину — посчитаю сразу.
+
+Например: <span style="color:var(--gold)">«сталь 6мм, длина реза 3.2м, 12 пробитий»</span>
+
+Или прикрепи DXF — распарсю длину реза автоматически.</div>
+  </div>
+</div>
+
+<div class="input-area">
+  <div class="input-inner">
+    <div class="atags" id="atags"></div>
+    <label class="fzone" id="fzone">
+      <input type="file" id="finput" multiple accept=".dxf,.pdf,.png,.jpg,.jpeg" onchange="handleFiles(this.files)">
+      <span>📎</span><span>Прикрепить файл (DXF, PDF, фото)</span>
+    </label>
+    <div class="irow">
+      <textarea id="msginput" placeholder="Сталь 6мм, длина реза 2.5м, 8 пробитий..." rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}"
+        oninput="autoResize(this)"></textarea>
+      <button class="send" id="sendbtn" onclick="send()">СЧИТАТЬ</button>
+    </div>
+    <div class="hint">Enter — отправить · Shift+Enter — новая строка</div>
+  </div>
+</div>
+
+<script>
+const PROXY = 'https://laser-proxy.89020000808r.workers.dev';
+
+const SYSTEM = `Ты — калькулятор лазерной резки. Станок Bodor A3-00-GB 3000W.
+
+ТАРИФЫ:
+Резка: 45 руб/м | Проколы: 3 руб/шт | Машвремя: 14000 руб/ч
+
+СКОРОСТИ (Ст3/чёрная сталь):
+3мм→9.0м/мин,0.35с | 4мм→3.4м/мин,0.44с | 5мм→3.1м/мин,0.70с
+6мм→2.2м/мин,0.80с | 8мм→1.8м/мин,0.90с | 10мм→1.35м/мин,0.95с | 12мм→1.0м/мин,0.90с
+
+ПРАЙС МЕТАЛЛА руб/м²:
+2мм→1100 | 3мм→1600 | 4мм→2100 | 5мм→2600 | 6мм→3100
+8мм→4100 | 10мм→5100 | 12мм→6100 | 16мм→8100 | 20мм→10100
+
+ЛИСТЫ: 2мм→1250×2500мм | 3-12мм→1500×3000мм
+
+МЕТАЛЛ: <0.5 листа→фактич.площадь | ≥0.5 листа→целый лист
+
+ВРЕМЯ: ((длина_м/скорость_м_мин)+(проколов×время_с/60))/60 × 2.7
+
+РАБОТА: (метраж×45)+(проколы×3)+(время_ч×14000)
+ИТОГО: металл+работа
+
+ЦЕНЫ КЛИЕНТУ: Наличные×1.0 | Без НДС×1.1111 | С НДС×1.4333
+
+ФОРМАТ ОТВЕТА — СТРОГО:
+[ДЛЯ МЕНЯ]
+Металл: X руб (X м², X листов)
+Время (чистое): X мин
+Время (×2.7): X мин / X ч
+Проколов: X шт
+Метраж: X м
+Стоимость метража: X руб
+Стоимость машвремени: X руб
+Работа итого: X руб
+ИТОГО: X руб
+
+[ДЛЯ КЛИЕНТА]
+Наличные: X руб
+Без НДС: X руб
+С НДС: X руб
+
+Отвечай только по делу. Если данных не хватает — спроси только самое необходимое.`;
+
+let files=[], history=[], loading=false;
+
+function checkKey(){
+  const k=document.getElementById('apiKey').value.trim();
+  const dot=document.getElementById('sdot');
+  const txt=document.getElementById('stext');
+  const ok=k.startsWith('sk-ant-');
+  dot.className='sdot'+(ok?' ok':'');
+  txt.textContent=ok?'ключ задан':(k?'неверный формат':'не задан');
+  txt.style.color=ok?'var(--green)':'var(--muted)';
+}
+
+function autoResize(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,120)+'px';
+}
+
+async function handleFiles(list){
+  for(const f of list){
+    if(f.name.toLowerCase().endsWith('.dxf')){
+      const txt=await f.text();
+      const parsed=parseDXF(txt);
+      files.push({name:f.name,type:'dxf',parsed});
+    } else {
+      const b64=await toB64(f);
+      files.push({name:f.name,type:'img',mt:f.type||'image/jpeg',b64});
+    }
+  }
+  renderTags();
+  document.getElementById('finput').value='';
+}
+
+function toB64(f){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=rej;
+    r.readAsDataURL(f);
+  });
+}
+
+function parseDXF(txt){
+  const lines=txt.split('\n').map(l=>l.trim());
+  let len=0,piercings=0;
+  for(let i=0;i<lines.length;i++){
+    if(lines[i]==='0'){
+      const e=lines[i+1]?.trim();
+      if(e==='LINE'){
+        const p={};
+        for(let j=i+2;j<Math.min(i+40,lines.length);j+=2){
+          if(lines[j]==='0')break;
+          p[lines[j]]=parseFloat(lines[j+1]);
+        }
+        const dx=(p['12']||0)-(p['10']||0);
+        const dy=(p['22']||0)-(p['20']||0);
+        len+=Math.sqrt(dx*dx+dy*dy);
+        piercings++;
+      }
+      if(e==='ARC'){
+        const p={};
+        for(let j=i+2;j<Math.min(i+40,lines.length);j+=2){
+          if(lines[j]==='0')break;
+          p[lines[j]]=parseFloat(lines[j+1]);
+        }
+        const r=p['40']||0;
+        let s=(p['50']||0)*Math.PI/180;
+        let en=(p['51']||0)*Math.PI/180;
+        if(en<s)en+=2*Math.PI;
+        len+=r*(en-s);
+      }
+      if(e==='CIRCLE'){
+        const p={};
+        for(let j=i+2;j<Math.min(i+20,lines.length);j+=2){
+          if(lines[j]==='0')break;
+          p[lines[j]]=parseFloat(lines[j+1]);
+        }
+        len+=2*Math.PI*(p['40']||0);
+        piercings++;
+      }
+      if(e==='LWPOLYLINE'||e==='POLYLINE')piercings++;
+    }
+  }
+  return{lengthM:(len/1000).toFixed(3),piercings:Math.max(piercings,1)};
+}
+
+function renderTags(){
+  const c=document.getElementById('atags');
+  c.innerHTML='';
+  files.forEach((f,i)=>{
+    const t=document.createElement('div');
+    t.className='atag';
+    t.innerHTML=`<span>${f.type==='dxf'?'📐':'🖼'} ${f.name}${f.type==='dxf'?` (${f.parsed.lengthM}м, ${f.parsed.piercings}пр.)`:''}</span><button onclick="removeFile(${i})">×</button>`;
+    c.appendChild(t);
+  });
+}
+
+function removeFile(i){files.splice(i,1);renderTags();}
+
+function buildContent(text,flist){
+  const content=[];
+  for(const f of flist){
+    if(f.type==='dxf'){
+      content.push({type:'text',text:`[DXF: ${f.name}]\nДлина реза: ${f.parsed.lengthM} м\nПробитий: ${f.parsed.piercings} шт\nУкажи материал и толщину для расчёта.`});
+    } else {
+      content.push({type:'image',source:{type:'base64',media_type:f.mt,data:f.b64}});
+    }
+  }
+  if(text)content.push({type:'text',text});
+  return content;
+}
+
+function addMsg(role,text,isResult=false){
+  const area=document.getElementById('chatArea');
+  const wrap=document.createElement('div');
+  wrap.className=`msg ${role==='user'?'user':'bot'}`;
+  const lbl=document.createElement('div');
+  lbl.className='mlabel';
+  lbl.textContent=role==='user'?'Вы':'Калькулятор';
+  wrap.appendChild(lbl);
+  if(isResult){
+    wrap.appendChild(buildResultCard(text));
+  } else {
+    const b=document.createElement('div');
+    b.className='bubble';
+    b.textContent=text;
+    wrap.appendChild(b);
+  }
+  area.appendChild(wrap);
+  area.scrollTop=area.scrollHeight;
+}
+
+function buildResultCard(text){
+  const card=document.createElement('div');
+  card.className='rcard';
+  const parts=text.split(/\[(ДЛЯ МЕНЯ|ДЛЯ КЛИЕНТА)\]/g);
+  let i=0;
+  while(i<parts.length){
+    const title=parts[i].trim();
+    const body=parts[i+1];
+    if((title==='ДЛЯ МЕНЯ'||title==='ДЛЯ КЛИЕНТА')&&body){
+      const head=document.createElement('div');
+      head.className='rcard-head';
+      head.textContent=title;
+      card.appendChild(head);
+      const lines=body.trim().split('\n').filter(l=>l.trim());
+      if(title==='ДЛЯ КЛИЕНТА'){
+        const grid=document.createElement('div');
+        grid.className='pgrid';
+        lines.forEach(line=>{
+          const ci=line.indexOf(':');
+          if(ci<0)return;
+          const lbl=line.slice(0,ci).trim();
+          const val=line.slice(ci+1).trim();
+          const box=document.createElement('div');
+          const cls=lbl.includes('Налич')?'c':lbl.includes('НДС')&&!lbl.includes('Без')?'v':'n';
+          box.className=`pbox ${cls}`;
+          box.innerHTML=`<div class="ptype">${lbl}</div><div class="pval">${val}</div>`;
+          grid.appendChild(box);
+        });
+        card.appendChild(grid);
+      } else {
+        lines.forEach(line=>{
+          const ci=line.indexOf(':');
+          if(ci<0)return;
+          const row=document.createElement('div');
+          row.className='rrow';
+          row.innerHTML=`<span class="rl">${line.slice(0,ci)}</span><span class="rv">${line.slice(ci+1).trim()}</span>`;
+          card.appendChild(row);
+        });
+      }
+      i+=2;
+    } else {i++;}
+  }
+  return card;
+}
+
+function addThinking(){
+  const area=document.getElementById('chatArea');
+  const wrap=document.createElement('div');
+  wrap.className='msg bot';
+  wrap.id='thinking';
+  wrap.innerHTML=`<div class="mlabel">Калькулятор</div><div class="thinking"><div class="dots"><span></span><span></span><span></span></div> считаю...</div>`;
+  area.appendChild(wrap);
+  area.scrollTop=area.scrollHeight;
+}
+
+async function send(){
+  if(loading)return;
+  const key=document.getElementById('apiKey').value.trim();
+  if(!key){alert('Введи API ключ!');return;}
+  const input=document.getElementById('msginput');
+  const text=input.value.trim();
+  const flist=[...files];
+  if(!text&&!flist.length)return;
+
+  let disp=text;
+  if(flist.length)disp=(text?text+'\n':'')+flist.map(f=>`📎 ${f.name}`).join('\n');
+  addMsg('user',disp);
+
+  const content=buildContent(text,flist);
+  history.push({role:'user',content});
+
+  input.value='';input.style.height='auto';
+  files=[];renderTags();
+  loading=true;
+  document.getElementById('sendbtn').disabled=true;
+  addThinking();
+
+  try{
+    const resp=await fetch(PROXY,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':key,
+        'anthropic-version':'2023-06-01'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1500,
+        system:SYSTEM,
+        messages:history
+      })
+    });
+    const data=await resp.json();
+    document.getElementById('thinking')?.remove();
+    if(data.error){
+      addMsg('assistant','❌ Ошибка: '+data.error.message);
+    } else {
+      const reply=data.content?.[0]?.text||'';
+      history.push({role:'assistant',content:reply});
+      const isResult=reply.includes('[ДЛЯ МЕНЯ]')||reply.includes('[ДЛЯ КЛИЕНТА]');
+      addMsg('assistant',reply,isResult);
+    }
+  }catch(e){
+    document.getElementById('thinking')?.remove();
+    addMsg('assistant','❌ Ошибка соединения: '+e.message);
+  }
+  loading=false;
+  document.getElementById('sendbtn').disabled=false;
+}
+
+const fz=document.getElementById('fzone');
+fz.addEventListener('dragover',e=>{e.preventDefault();fz.classList.add('drag');});
+fz.addEventListener('dragleave',()=>fz.classList.remove('drag'));
+fz.addEventListener('drop',e=>{e.preventDefault();fz.classList.remove('drag');handleFiles(e.dataTransfer.files);});
+</script>
+</body>
+</html>
